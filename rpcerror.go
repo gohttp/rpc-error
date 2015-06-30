@@ -64,7 +64,6 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(b, &req)
 	if err != nil {
 		fmt.Printf("rpcerror error: %s\n", err)
-		goto write
 	}
 
 	param = req["method"].(string)
@@ -77,11 +76,12 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// copy status code
 	w.WriteHeader(rec.Code)
 
+	w.Write(rec.Body.Bytes())
+
 	b = rec.Body.Bytes()
 	err = json.Unmarshal(b, &res)
 	if err != nil {
 		fmt.Printf("rpcerror error: %s\n", err)
-		goto write
 	}
 
 	if msg := res["error"]; msg != nil {
@@ -93,9 +93,6 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		m.stats.Incr("query", resource(param), method(param))
 	}
-
-write:
-	w.Write(rec.Body.Bytes())
 }
 
 func resource(m string) string {
